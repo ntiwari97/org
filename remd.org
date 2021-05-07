@@ -23,7 +23,7 @@
 ** LAMMPS Scripting                                                :noexport:
 
 REMD simulations are run using the ~temper~ command in LAMMPS. A portion of sample script which uses the temper command is: 
-
+ the following 
 #+BEGIN_SRC perl
 
 # Integrator
