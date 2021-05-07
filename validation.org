@@ -1,0 +1,162 @@
+#+TITLE: Validation 
+#+AUTHOR: Nick Tiwari
+#+OPTIONS: H:2 toc:t num:t
+#+LATEX_CLASS: beamer
+#+LATEX_CLASS_OPTIONS: [presentation]
+#+BEAMER_THEME: CambridgeUS
+#+EXCLUDE_TAGS: noexport
+#+COLUMNS: %45ITEM %10BEAMER_ENV(Env) %10BEAMER_ACT(Act) %4BEAMER_COL(Col)
+#+BIND: org-beamer-frame-default-options "allowframebreaks"
+
+** Set Frame Breaks                                                :noexport:
+#+BEGIN_SRC emacs-lisp
+(setq org-beamer-frame-default-options "allowframebreaks,label=")
+#+END_SRC
+
+#+RESULTS:
+: allowframebreaks,label=
+
+
+* Literature Review
+** Structure Factor and RDFs
+   + Both Molinero and Goddard as well as Sengupta and Lyulin suggest validating force field with structure factor $S(q)$ and Sulfur-Sulfur RDFs
+
+*** Structure Factor
+    :PROPERTIES:
+    :BEAMER_COL: 0.48
+    :BEAMER_ENV: block
+    :END:
+    + Structure Factor can be compared to x-ray diffraction data (SAXS and SANS)
+    + Peak on $S(q)$ plot corresponds to characteristic size of water cluster (i.e. pore size)
+    + $S(q)$ calc hard to implement
+
+
+    
+*** S-S RDF
+        :PROPERTIES:
+    :BEAMER_COL: 0.48
+    :BEAMER_ENV: block
+    :END:
+    + Describes most probable distance between sulfur atoms
+    + Good descriptor of hydrophilic region characteristics (water clusters)
+    + Easy to implement
+    + Not as comprehensive as $S(q)$, i.e., no direct insight into water cluster size
+
+** Structure Factor Pic
+This is a picture of a structure factor plot for different degrees of blockiness from Goddard and Molinero's paper
+
++ DR = 0.1 is spread out sulfonic groups and DR = 1.1 is close together sulfonic groups
++ $d_{max} = 2\pi/q_{max}$
+    
+   #+ATTR_LATEX: :width 0.4\textwidth
+   [[file:pictures/structfactor.png]]
+
+** Sengupta and Lyulin
+
+ *Simulation Details*
+ 
+    + 20 Polymer Chains
+      
+    + *Force Field*: PCFF combined with COMPASS Charges
+      
+    + $\lambda$ = 5
+
+    + Initial Density = 1.8 g/cc
+
+    + Timestep = 1 fs
+      
+    + *Simulation Protocol*
+      1. 0.2 ns NVT at 353 K
+      2. Annealing
+	 + Heat from 353 K to 600 K over 50 ps time
+	 + Cool from 600 K to 353 K over 50 ps time
+	 + Repeat 5 times
+      3. 0.2 ns NVT at 353 K
+      4. 8 ns NpT simulation at p = 1 atm and T = 353 K
+
+    + Last 3 ns of NpT used for analysis
+
+* Validation Simulation
+
+** Initial Configuration
+A visualization of the initial configuration file is shown below:
+
+   + 20 Polymer Chains, 1000 waters, $\rho = 1.8 g/cm^3$
+   
+   #+ATTR_LATEX: :width 0.4\textwidth
+   [[file:/home/nick/Documents/DOEIonomers/emcautomated/polymer/validation/initconfig.png]]
+
+** Issues
+Occasionally VMD will refuse to recognize a carbon within a specified proximity of an atom
+  + ~set sel [atomselect top "type c and within 2 of type s"]~
+  + Necessary to specify different CSO$_3$ charge in FF file
+    
+*** Correct
+    :PROPERTIES:
+    :BEAMER_COL: 0.4
+    :BEAMER_ENV: block
+    :END:
+Bond to C recognized
+    [[file:pictures/correct.png]]
+
+    
+*** Incorrect
+        :PROPERTIES:
+    :BEAMER_COL: 0.4
+    :BEAMER_ENV: block
+    :END:
+Bond to C not recognized
+    [[file:pictures/incorrect.png]]
+
+** Changing Atom Types/Deleting Bonds
+
+   We have to remove a few dihedrals/angles/impropers which TopoTools guesses incorrectly. The easiest way to do this is just to remove non-exist angles with Awk, and set the angle coefficients to zero.
+
+   For the *angles* we need to delete:
+    + ~hhyd-ohyd-o~ (type 16)
+    + ~ohyd-o-s~ (type 20)
+
+For the *dihedrals*, we need to delete:
+    + ~s-o-ohyd-hyd~ (type 20)
+    + ~ohyd-o-s-o=~ (type 19)
+    + ~ohyd-o-s-cso3~ (type 18)
+    
+For the *impropers*, we need to delete:
+    + ~o-hhyd-hhyd-ohyd~ (type 15)
+
+To address the problem from the issues slide, I use a grep script to detect and change incorrectly labeled ~cso3~ atoms in VMD. 
+
+*** Awk Code
+#+BEGIN_SRC sh
+cd /home/nick/Documents/DOEIonomers/emcautomated/polymer/validation
+
+# This awk script returns the bonds/atom indices
+# matching a specific type of bond
+grep -oh -P '.{0,13}c-s.{0,1}' bonds.txt
+
+#+END_SRC
+
+#+RESULTS:
+| -f}    |  {700 |  701 | c-s} |
+| }      | {5508 | 5509 | c-s} |
+| }      | {7404 | 7405 | c-s} |
+| {11260 | 11261 | c-s} |      |
+| {11916 | 11917 | c-s} |      |
+| {14172 | 14173 | c-s} |      |
+
+
+** Deleting Angles/Dihedrals with Awk                                              
+*** Awk Code
+#+BEGIN_SRC awk :in-file ~/Documents/DOEIonomers/emcautomated/polymer/validation/nafion.data :results value file :file angles.txt :output-dir ~/Documents/DOEIonomers/emcautomated/polymer/validation
+# Get rid of non existent angles
+/ Angles/{flag=1}
+/ Dihedrals/{flag=0}flag{if($2 != 16 && $2 != 20) print}
+/ Dihedrals/{flag=1}
+/ Impropers/{flag=0}flag
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Documents/DOEIonomers/emcautomated/polymer/validation/angles.txt]]
+
+** meme :noexport:
+   

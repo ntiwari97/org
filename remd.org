@@ -1,0 +1,440 @@
+#+TITLE: REMD Configurations
+#+AUTHOR: Nick Tiwari
+#+OPTIONS: H:2 toc:t num:t
+#+LATEX_CLASS: beamer
+#+LATEX_CLASS_OPTIONS: [presentation]
+#+BEAMER_THEME: CambridgeUS
+#+EXCLUDE_TAGS: noexport
+
+** Set Frame Breaks                                                :noexport:
+#+BEGIN_SRC emacs-lisp
+(setq org-beamer-frame-default-options "allowframebreaks,label=")
+(with-eval-after-load "org-tree-slide"
+  (define-key org-tree-slide-mode-map (kbd "<f9>") 'org-tree-slide-move-previous-tree)
+  (define-key org-tree-slide-mode-map (kbd "<f10>") 'org-tree-slide-move-next-tree)
+  )
+#+END_SRC
+
+#+RESULTS:
+: org-tree-slide-move-next-tree
+
+
+* 1200 K to 1800 K Simulations
+** LAMMPS Scripting                                                :noexport:
+
+REMD simulations are run using the ~temper~ command in LAMMPS. A portion of sample script which uses the temper command is: 
+
+#+BEGIN_SRC perl
+
+# Integrator
+
+velocity 	Platinum zero linear
+fix		temp notPlatinum langevin ${temperature1} ${temperature1} ${tdamp} ${lseed} 
+fix		int notPlatinum nve
+fix wallhi all wall/harmonic zlo EDGE 622.609 0.000 4.0000 units box
+
+dump            1 all custom ${dtdump} ${project}.dump.${rep} id type x y z
+temper		${truns1} ${dttemper} ${temperature1} temp 3847 58382
+
+#+END_SRC 
+
+The ~temperature1~ variable is a list of different temperatures to be run over the course of the REMD simulation. It's defined like this:
+
+#+BEGIN_SRC perl
+variable	temperature1	world   1200 1300 1400 1500 1600 1700 1800
+#+END_SRC
+
+The ~run~ command for the LAMMPS script is slightly different from the normal run script. In a shell, this would consist of:
+
+#+BEGIN_SRC sh
+mpirun -np 28 lmp_mpi -partition 7x4 -in nafion.in 
+#+END_SRC
+
+The LAMMPS scripts used for REMD runs is below:
+
+[[Nafion Input File]]
+
+** Simulation Parameters 
+
+| Parameter                     |    Value |
+|-------------------------------+----------|
+| Timestep (fs)                 |      0.5 |
+| Simulation Length (timesteps) |  6000000 |
+| Number of Replicates (temps)  |        7 |
+| Processors per Replicate      |        4 |
+| Total Wall Time (hrs:min:sec) | 11:16:20 |
+
+
+* General REMD Parameters
+** Morimoto Annealing 
+The Morimoto procedure consists of: 
+
+1. An annealing step, done at 1000 K for 1 ns
+    
+2. Linear temperature decrease from 1000 K to 353 K over the course of 1 ns
+
+3. Simulation at 353 K for 1 ns
+
+Note that all of the figures presented here *for the REMD run* are only for step 1. Important simulation parameters for the REMD run are as follows: 
+
+** Importance of Energy Overlap
+
+   In order for a replicate swap to happen, there must be overlap in the energy between two replicates. At lower temperatures, fluctuations are smaller, so it is less likely that there will be overlap between widely spaced temperatures. So, in order for a swap to occur, the lower temperature replicates should be spaced more closely than higher temperature replicates
+   
+** System Specifications
+
+   | Parameter                      |      Value |
+   |--------------------------------+------------|
+   | Timestep (fs)                  |        0.1 |
+   | Temp Range                     | 350 - 1550 |
+   | Number of Replicates           |         18 |
+   | Simulation Length (time steps) |  600000000 |
+   | Processors per Replicate       |         28 |
+   | Total Wall Time (hh:mm:ss)     |   34:00:48 |
+   | Simulation Time (ns)           |         60 |
+
+    + From 350 K - 550 K, the temperature step is 33 K per rep
+    + From 550 K - 1550 K, the temperature stem is 100 K per rep
+
+      
+* D2020 REMD
+** Download/Modification Scripts                                   :noexport:
+
+#+BEGIN_SRC sh
+#Copy log.lammps files from CORI
+scp ntiwari@cori.nersc.gov:~/simulations/remd/d2020remd/log.lammps* ~/Documents/DOEIonomers/REMD/d2020/lammpslogs
+#+END_SRC
+
+#+RESULTS:
+
+
+#+BEGIN_SRC sh
+cd ~/Documents/DOEIonomers/REMD/d2020/lammpslogs
+
+# Delete previously generated data files
+rm log.lammps.*.data
+
+# Run pizza.py script to make data files
+for f in log.lammps.*; do
+    python2 ~/Downloads/mylammps/tools/python/log2txt.py "$f" "$f.data" Step PotEng Temp TotEng Press
+done
+
+#+END_SRC
+
+#+RESULTS:
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+
+#+RESULTS:
+   
+** Potential Energy for All Replicates
+   
+#+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/d2020/remd_all.png
+cd '~/Documents/DOEIonomers/REMD/d2020/lammpslogs'
+set datafile separator ' '
+set key r
+set title 'Rep 0-4'
+set xrange[11000:90000000]
+set yrange[-6000:100]
+set key
+plot for [i=0:17] 'log.lammps.'.i.'.data' using 1:2 with lines title 'rep.'.i
+#+END_SRC
+
+#+RESULTS:
+#+ATTR_LATEX: :width 0.8\textwidth
+[[file:~/Documents/DOEIonomers/REMD/d2020/remd_all.png]]
+
+   
+#+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/d2020/remd1.png
+cd '~/Documents/DOEIonomers/REMD/d2020/lammpslogs'
+set datafile separator ' '
+set key r
+set title 'Rep 0-4'
+set xrange[11000:90000000]
+set yrange[-6000:100]
+set key
+plot for [i=0:4] 'log.lammps.'.i.'.data' using 1:2 with lines title 'rep.'.i
+#+END_SRC
+
+#+RESULTS:
+#+ATTR_LATEX: :width 0.75\textwidth
+[[file:~/Documents/DOEIonomers/REMD/d2020/remd1.png]]
+
+#+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/d2020/remd2.png
+cd '~/Documents/DOEIonomers/REMD/d2020/lammpslogs'
+set datafile separator ' '
+set key r
+set title 'Rep 5-9'
+set xrange[11000:90000000]
+set yrange[-6000:100]
+set key
+plot for [i=5:9] 'log.lammps.'.i.'.data' using 1:2 with lines title 'rep.'.i
+#+END_SRC
+
+#+RESULTS:
+#+ATTR_LATEX: :width 0.75\textwidth
+[[file:~/Documents/DOEIonomers/REMD/d2020/remd2.png]]
+
+#+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/d2020/remd3.png
+cd '~/Documents/DOEIonomers/REMD/d2020/lammpslogs'
+set datafile separator ' '
+set key r
+set title 'Rep 10-14'
+set xrange[11000:90000000]
+set yrange[-6000:100]
+set key
+plot for [i=10:14] 'log.lammps.'.i.'.data' using 1:2 with lines title 'rep.'.i
+#+END_SRC
+
+#+RESULTS:
+#+ATTR_LATEX: :width 0.75\textwidth
+[[file:~/Documents/DOEIonomers/REMD/d2020/remd3.png]]
+
+#+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/d2020/remd4.png
+cd '~/Documents/DOEIonomers/REMD/d2020/lammpslogs'
+set datafile separator ' '
+set key r
+set title 'Rep 14-17'
+set xrange[11000:90000000]
+set yrange[-6000:100]
+set key
+plot for [i=14:17] 'log.lammps.'.i.'.data' using 1:2 with lines title 'rep.'.i
+#+END_SRC
+
+#+RESULTS:
+#+ATTR_LATEX: :width 0.75\textwidth
+[[file:~/Documents/DOEIonomers/REMD/d2020/remd4.png]]
+** Low Energy Replicates
+   
+   #+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/d2020/rep_14.png
+cd '~/Documents/DOEIonomers/REMD/d2020/lammpslogs'
+set datafile separator ' '
+set autoscale
+set xrange [11000:]
+set key
+set ylabel 'Potential Energy (Kcal/mol)'
+set xlabel 'Timestep'
+set title 'Rep 14'
+n = 100
+
+# initialize the variables
+do for [i=1:n] {
+    eval(sprintf("back%d=0", i))
+}
+
+# build shift function (back_n = back_n-1, ..., back1=x)
+shift = "("
+do for [i=n:2:-1] {
+    shift = sprintf("%sback%d = back%d, ", shift, i, i-1)
+} 
+shift = shift."back1 = x)"
+# uncomment the next line for a check
+# print shift
+# build sum function (back1 + ... + backn)
+
+sum = "(back1"
+do for [i=2:n] {
+    sum = sprintf("%s+back%d", sum, i)
+}
+sum = sum.")"
+
+# uncomment the next line for a check
+# print sum
+
+# define the functions like in the gnuplot demo
+# use macro expansion for turning the strings into real functions
+samples(x) = $0 > (n-1) ? n : ($0+1)
+avg_n(x) = (shift_n(x), @sum/samples($0))
+shift_n(x) = @shift
+
+plot 'log.lammps.6.data' using 1:2 with lines title 'rep.0' lc 'blue',\
+     'log.lammps.6.data' using 1:(avg_n($2)) w l lc rgb 'red' lw 2 title 'avg'
+#+END_SRC
+
+#+RESULTS:
+#+ATTR_LATEX: :width 0.8\textwidth
+[[file:~/Documents/DOEIonomers/REMD/d2020/rep_14.png]]
+
+D2020 
+*** Visualization
+    [[file:~/Documents/DOEIonomers/REMD/d2020/remdrep6.png]]
+
+* Configuration 1 REMD
+** Download/Modification Scripts                                   :noexport: 
+#+BEGIN_SRC sh
+#Copy log.lammps files from CORI
+scp ntiwari@cori.nersc.gov:~/simulations/config1remd/log.lammps*
+~/Documents/DOEIonomers/REMD/config1/lammpslogs
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC sh
+#Copy log.lammps files from CORI
+scp ntiwari@cori.nersc.gov:~/simulations/config1/log.lammps ~/Documents/DOEIonomers/REMD/config1/lammpslogs/comparison.log.lammps
+#+END_SRC
+
+#+RESULTS:
+
+
+#+BEGIN_SRC sh
+cd ~/Documents/DOEIonomers/REMD/config1/lammpslogs
+
+# Delete previously generated data files
+rm log.lammps.*.data
+
+# Run pizza.py script to make data files
+for f in log.lammps.*; do
+    python2 ~/Downloads/mylammps/tools/python/log2txt.py "$f" "$f.data" Step PotEng Temp TotEng Press
+done
+#+END_SRC
+
+#+RESULTS:
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries |
+| 1000 | 60001000 |     |         |
+| read |    60002 | log | entries  |
+
+#+RESULTS:
+
+** Potential Energy for All Replicates
+    
+#+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/large_temp_group.png
+cd '~/Documents/DOEIonomers/REMD/config1/lammpslogs'
+set datafile separator ' '
+set key r
+set xrange[11000:90000000]
+set yrange[-2000:8500]
+set key
+plot for [i=0:17] 'log.lammps.'.i.'.data' using 1:2 with lines title 'rep.'.i
+#+END_SRC
+
+#+ATTR_LATEX: :width 0.8\textwidth
+[[file:~/Documents/DOEIonomers/REMD/large_temp_group.png]]
+
+** Replicate 6
+   + Final Energy is 571.5 Kcal/mol
+#+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/rep_14.png
+cd '~/Documents/DOEIonomers/REMD/lammpslogs'
+set datafile separator ' '
+set autoscale
+set xrange [11000:]
+set yrange [350:2050]
+set key
+set ylabel 'Potential Energy (Kcal/mol)'
+set xlabel 'Timestep'
+set title 'Rep 6, Final T = 2050 K'
+n = 1000
+
+# initialize the variables
+do for [i=1:n] {
+    eval(sprintf("back%d=0", i))
+}
+
+# build shift function (back_n = back_n-1, ..., back1=x)
+shift = "("
+do for [i=n:2:-1] {
+    shift = sprintf("%sback%d = back%d, ", shift, i, i-1)
+} 
+shift = shift."back1 = x)"
+# uncomment the next line for a check
+# print shift
+
+# build sum function (back1 + ... + backn)
+sum = "(back1"
+do for [i=2:n] {
+    sum = sprintf("%s+back%d", sum, i)
+}
+sum = sum.")"
+# uncomment the next line for a check
+# print sum
+
+# define the functions like in the gnuplot demo
+# use macro expansion for turning the strings into real functions
+samples(x) = $0 > (n-1) ? n : ($0+1)
+avg_n(x) = (shift_n(x), @sum/samples($0))
+shift_n(x) = @shift
+
+plot 'log.lammps.6.data' using 1:3 with lines title 'rep.6' lc 'blue',\
+     'log.lammps.6.data' using 1:(avg_n($3)) w l lc rgb 'red' lw 2 title 'avg'
+#+END_SRC
+
+
+#+RESULTS:
+#+ATTR_LATEX: :width 0.7\textwidth
+[[file:~/Documents/DOEIonomers/REMD/config1/rep_14.png]]
+
+Config 1 
+*** Visualization
+[[file:~/Documents/DOEIonomers/REMD/config1/remdrep6.png]]
+    
+    
+* REMD Resources                                                   :noexport: 
+[[https://www.r-ccs.riken.jp/labs/cbrt/tutorial/remd-tutorials/tutorial-2-1/#2151Calculate_the_acceptance_ratioof_each_replica]]
+   

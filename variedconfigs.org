@@ -1,0 +1,241 @@
+#+TITLE: Varied Configurations
+
+* Other Proposed Backbones
+  Each system contains two chains. The ratio of backbones to sidechains is 7:1 for the base case. The table below gives the masses for a single polymer chain, depending on the configuration:
+
+  | Configuration | Backbone Mass (amu) | Sidechain Mass (amu) | Polymer Chain Mass |
+  |---------------+---------------------+----------------------+--------------------|
+  |         D2020 |              99.992 |              445.087 |           7008.198 |
+  |             1 |            244.0562 |              279.110 |          12003.103 |
+  |             2 |            193.9802 |              279.110 |          9899.9112 |
+  |             3 |            244.0402 |              279.110 |          12002.431 |
+  |             4 |            210.0314 |              279.110 |          10574.062 |
+  #+TBLFM: @2$4=($2*7+$3)*6+69.006*2
+  
+** Configuration 1
+   
+[[file:pictures/config1.png]]
+
+*SMILES*: FC1*OC(C(F)(F)F)(C(F)(F)F)OC1*F
+
+   #+BEGIN_SRC sh
+#Copy LAMMPS Datafile to Kube
+kubectl cp -n ntiwari ~/Documents/DOEIonomers/emcautomated/polymer/config1/nafion.data lammps6-0:/home/jovyan/simulations/config1/nafion.data
+   #+END_SRC
+
+   #+RESULTS:
+
+** Configuration 2
+[[file:pictures/config2.png]]
+*SMILES*: FC1(F)OC*(OC1(F)F)C*(F)F
+   #+BEGIN_SRC sh
+#Copy LAMMPS Datafile to Kube
+kubectl cp -n ntiwari ~/Documents/DOEIonomers/emcautomated/polymer/config2/nafion.data lammps6-0:/home/jovyan/simulations/config2/nafion.data
+   #+END_SRC
+
+  #+RESULTS:
+
+** Configuration 3
+[[file:pictures/config3.png]]
+*SMILES*: FC1(F)OC*(OC1(F)C(F)(F)F)C*(F)F
+   #+BEGIN_SRC sh
+#Copy LAMMPS Datafile to Kube
+kubectl cp -n ntiwari ~/Documents/DOEIonomers/emcautomated/polymer/config3/nafion.data lammps6-0:/home/jovyan/simulations/config3/nafion.data
+   #+END_SRC
+
+   #+RESULTS:
+
+** Configuration 4
+
+[[file:pictures/config4.png]]
+   
+*SMILES* FC1(F)OC*(OC(F)(F)F)C*(F)O1
+
+* Holding Pt SA constant
+  Holding Platinum surface area constant should make it easier to compare configurations with different chain weights.
+
+** Building Pt Slab/Calculating SA for D2020
+
+  Code for generating a periodic fcc111 cell in ASE: 
+  
+#+BEGIN_SRC ipython
+from ase.build import fcc111
+slab = fcc111('Pt', size=(8,10,3), vacuum=0.0, orthogonal=True)
+from ase.visualize import view
+view(slab)
+#+END_SRC
+
+  #+RESULTS:
+  :results:
+  # Out [3]: 
+  :end:
+
+  |   |      x |      y |     z |
+  |---+--------+--------+-------|
+  | x | 22.175 |  0.000 | 0.000 |
+  | y | 0.0000 | 24.005 | 0.000 |
+  | z | 0.0000 | 0.0000 | 4.526 |
+
+  Surface Area = $532.311\,A^2$
+
+** Calculating SA for Other Configurations
+
+  | Configuration | Backbone Mass (amu) | Polymer Chain Mass | Platinum SA (Calc) |
+  |---------------+---------------------+--------------------+--------------------|
+  |         D2020 |            50.00751 |          6997.3393 |            532.311 |
+  |             1 |            244.0562 |          12003.103 |          913.11618 |
+  |             2 |            193.9802 |          9899.9112 |          753.11935 |
+  |             3 |            244.0402 |          12002.431 |          913.06506 |
+  |             4 |            210.0314 |          10574.062 |          804.40426 |
+  #+TBLFM: $4=(532.311/6997.3393)*$3
+
+   Since we can only pick integers for the values of platinum atoms in the x and y directions, the calculated Pt SA won't be exactly the same as the SA of the Pt surface ASE generates.
+   
+#+BEGIN_SRC ipython
+from ase.build import fcc111
+slab = fcc111('Pt', size=(12,12,3), vacuum=0.0, orthogonal=True)
+slab2 = fcc111('Pt', size=(11,10,3), vacuum=0.0, orthogonal=True)
+slab4 = fcc111('Pt', size=(11,12,3), vacuum=0.0, orthogonal=True)
+config1 = slab.get_cell()
+config2 = slab2.get_cell()
+config4 = slab4.get_cell()
+from ase.io import read, write
+write('/home/nick/Documents/DOEIonomers/emcautomated/polymer/config1/platinumslab.pdb',slab)
+write('/home/nick/Documents/DOEIonomers/emcautomated/polymer/config2/platinumslab.pdb',slab2)
+write('/home/nick/Documents/DOEIonomers/emcautomated/polymer/config3/platinumslab.pdb',slab2)
+write('/home/nick/Documents/DOEIonomers/emcautomated/polymer/config4/platinumslab.pdb',slab4)
+print(config1)
+print(config2)
+print(config4)
+print("Actual SA for Config 1 & 3 = " + str(config1[0,0]*config1[1,1]))
+print("Actual SA for Config 2 = " + str(config2[0,0]*config2[1,1]))
+print("Actual SA for Config 4 = " + str(config4[0,0]*config4[1,1]))
+#+END_SRC
+
+#+RESULTS:
+:results:
+# Out [22]: 
+# output
+Cell([33.2623029870152, 28.80599937513017, 4.526426110446667])
+Cell([30.490444404763927, 24.004999479275142, 4.526426110446667])
+Cell([30.490444404763927, 28.80599937513017, 4.526426110446667])
+Actual SA for Config 1 & 3 = 958.1538790593502
+Actual SA for Config 2 = 731.9231020592257
+Actual SA for Config 4 = 878.3077224710709
+
+:end:
+
+** Calculating Z-dimension
+   It's important to fix the height of the box to give a density that is around that of hydrated D2020.
+
+   Morimoto gives the density of hydrated D2020 with a water number of 6 to be $1.8\,g/cm^3$. An acceptable assumed density is $1.5\,g/cm^3$
+
+   1 g/cm^3 = 0.602 amu/angstrom^3 -> 1.5 g/cm^3 = 0.903 amu/angstrom^3
+
+   | Configuration | Backbone Mass (amu) | Polymer Chain Mass (amu) | System mass w/o Pt (amu) | Surface Area (A^2) | z-dimension (A) |
+   |---------------+---------------------+--------------------------+--------------------------+--------------------+-----------------|
+   |         D2020 |            50.00751 |                4549.2706 |                10623.920 |          532.31088 |       22.102006 |
+   |             1 |            244.0562 |                12003.103 |                25531.585 |           958.1538 |       29.509021 |
+   |             2 |            193.9802 |                9899.9112 |                21325.201 |           731.9231 |       32.265614 |
+   |             3 |            244.0402 |                12002.431 |                25530.241 |           958.1538 |       29.507468 |
+   |             4 |            210.0314 |                10574.062 |                22673.503 |           878.3077 |       28.588027 |
+   #+TBLFM: $6=$4/(0.903*$5)
+
+** Box Shrinking
+   Box shrinking is done because EMC only understands 3D periodic boundary conditions. Because of this, sometimes polymer will stick out of the top/bottom of the box. Since our simulation has a Pt slab and is not periodic in the z-direction, we have to extend the box to fit all of the polymer and then shrink it over time.
+
+   The harmonic wall boundary is at the bottom of the box. The energy penalty for entering the harmonic wall region is: $E = \epsilon (r-r_c)^2$
+   
+   | Parameter | Value    |
+   |-----------+----------|
+   | epsilon   | 622.609  |
+   | r_c       | 4.0000 A |
+
+   No we can calculate the actual z-dimension of the box (i.e., including the platinum surface and the harmonic wall region.
+
+   | Configuration | Polymer Region Height (A) | Total PBC Box Height (A) |
+   |---------------+---------------------------+--------------------------|
+   |         D2020 |                 22.102006 |                30.628432 |
+   |             1 |                 29.509021 |                38.035447 |
+   |             2 |                 32.265614 |                40.792040 |
+   |             3 |                 29.507468 |                38.033894 |
+   |             4 |                 28.588027 |                37.114453 |
+   #+TBLFM: $3=$2+4+4.52642611
+
+   We have to shrink the box from the top edge because there's nothing at the bottom edge forcing the contents to stay in the box. The top has the harmonic boundary. 
+   
+** Results
+
+*** Get Trajectory File/Density Files
+    Trajectory File
+#+BEGIN_SRC sh
+kubectl cp -n ntiwari lammps6-0:/home/jovyan/simulations/config2/nafion.dump /tmp/nafion.dump
+#+END_SRC
+
+#+RESULTS:
+| Defaulting | container | name    | to  | lammps6. |        |       |
+| tar:       | Removing  | leading | `/' | from     | member | names |
+
+Get Final Stage Density Files
+
+#+BEGIN_SRC sh
+kubectl cp -n ntiwari lammps6-0:/home/jovyan/simulations/config1/nafion_stage3.density /home/nick/Documents/DOEIonomers/emcautomated/polymer/config1/nafion_stage3.density
+#+END_SRC
+
+#+RESULTS:
+| Defaulting | container | name    | to  | lammps6. |        |       |
+| tar:       | Removing  | leading | `/' | from     | member | names |
+
+Awk Density Files
+
+#+BEGIN_SRC sh
+IN_FILE=/home/nick/Documents/DOEIonomers/emcautomated/polymer/config1/nafion_stage3.density
+OUT_FILE=/home/nick/Documents/DOEIonomers/emcautomated/polymer/config1/nafion_density.txt
+D2020_FILE=/home/nick/Documents/DOEIonomers/emcautomated/polymer/production/nafion_density2.txt
+FINAL_FILE=/home/nick/Documents/DOEIonomers/emcautomated/polymer/config1/nafion_density2.txt
+awk 'f;/18000000/{f=1}f' $IN_FILE  > $OUT_FILE
+D2020_LENGTH=$(awk 'END{print $2}' $D2020_FILE)
+HOPI_LENGTH=$(awk 'END{print $2}' $OUT_FILE)
+diff=$(echo "$D2020_LENGTH-$HOPI_LENGTH"|bc)
+awk -v dif=$diff '(NR>1){print $2+dif+3.4,$4}' $OUT_FILE > $FINAL_FILE
+#+END_SRC
+
+#+RESULTS:
+
+*** Config 1 vs Production
+
+#+BEGIN_SRC gnuplot :file output.png
+set ylabel 'Density (g/cm^3)
+set xlabel 'Z (Angstroms)'
+set key l
+set xrange [30:70]
+
+plot '/home/nick/Documents/DOEIonomers/emcautomated/polymer/production/nafion_density2.txt' using 2:4 with lines title 'D2020',\
+     '/home/nick/Documents/DOEIonomers/emcautomated/polymer/config1/nafion_density2.txt' using 1:2 with lines title 'HOPI Config 1'
+
+#+END_SRC
+
+#+RESULTS:
+[[file:output.png]]
+
+**** Density
+#+RESULTS:
+[[file:output.png]]
+
+**** Visualization
+     
+     [[file:pictures/hopi1d2020.png]]
+     
+*** TODO Config 2 vs Production
+    #+BEGIN_SRC gnuplot :file output2.png
+set ylabel 'Density (g/cm^3)
+set xlabel 'Z (Angstroms)'
+set key l
+
+plot '/home/nick/Documents/DOEIonomers/emcautomated/polymer/production/nafion_density2.txt' using 2:4 with lines title 'D2020',\
+     '/home/nick/Documents/DOEIonomers/emcautomated/polymer/config2/nafion_density2.txt' using 1:2 with lines title 'HOPI Config 2'
+
+#+END_SRC
+
+#+RESULTS:
+[[file:
