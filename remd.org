@@ -6,7 +6,7 @@
 #+BEAMER_THEME: CambridgeUS
 #+EXCLUDE_TAGS: noexport
 
-** Set Frame Breaks                                                :noexport:
+** TODO Set Frame Breaks                                           :noexport:
 #+BEGIN_SRC emacs-lisp
 (setq org-beamer-frame-default-options "allowframebreaks,label=")
 (with-eval-after-load "org-tree-slide"
@@ -19,8 +19,8 @@
 : org-tree-slide-move-next-tree
 
 
-* 1200 K to 1800 K Simulations
-** LAMMPS Scripting                                                :noexport:
+* 1200 K to 1800 K Simulations                                     :noexport:
+** LAMMPS Scripting
 
 REMD simulations are run using the ~temper~ command in LAMMPS. A portion of sample script which uses the temper command is: 
  the following 
@@ -359,7 +359,7 @@ done
 | 1000 | 60001000 |     |         |
 | read |    60002 | log | entries |
 | 1000 | 60001000 |     |         |
-| read |    60002 | log | entries  |
+| read |    60002 | log | entries |
 
 #+RESULTS:
 
@@ -380,6 +380,8 @@ plot for [i=0:17] 'log.lammps.'.i.'.data' using 1:2 with lines title 'rep.'.i
 
 ** Replicate 6
    + Final Energy is 571.5 Kcal/mol
+
+
 #+BEGIN_SRC gnuplot :file ~/Documents/DOEIonomers/REMD/rep_14.png
 cd '~/Documents/DOEIonomers/REMD/lammpslogs'
 set datafile separator ' '
@@ -430,7 +432,7 @@ plot 'log.lammps.6.data' using 1:3 with lines title 'rep.6' lc 'blue',\
 #+ATTR_LATEX: :width 0.7\textwidth
 [[file:~/Documents/DOEIonomers/REMD/config1/rep_14.png]]
 
-Config 1 
+Configuration 1 
 *** Visualization
 [[file:~/Documents/DOEIonomers/REMD/config1/remdrep6.png]]
     

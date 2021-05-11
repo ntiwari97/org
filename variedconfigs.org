@@ -53,7 +53,6 @@ kubectl cp -n ntiwari ~/Documents/DOEIonomers/emcautomated/polymer/config3/nafio
 
 * Holding Pt SA constant
   Holding Platinum surface area constant should make it easier to compare configurations with different chain weights.
-
 ** Building Pt Slab/Calculating SA for D2020
 
   Code for generating a periodic fcc111 cell in ASE: 
@@ -226,7 +225,7 @@ plot '/home/nick/Documents/DOEIonomers/emcautomated/polymer/production/nafion_de
      
      [[file:pictures/hopi1d2020.png]]
      
-*** TODO Config 2 vs Production
+*** Config 2 vs Production
     #+BEGIN_SRC gnuplot :file output2.png
 set ylabel 'Density (g/cm^3)
 set xlabel 'Z (Angstroms)'
@@ -238,4 +237,5 @@ plot '/home/nick/Documents/DOEIonomers/emcautomated/polymer/production/nafion_de
 #+END_SRC
 
 #+RESULTS:
-[[file:
+[[file:output2.png]]
+

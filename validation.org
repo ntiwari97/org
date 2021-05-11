@@ -8,15 +8,6 @@
 #+COLUMNS: %45ITEM %10BEAMER_ENV(Env) %10BEAMER_ACT(Act) %4BEAMER_COL(Col)
 #+BIND: org-beamer-frame-default-options "allowframebreaks"
 
-** Set Frame Breaks                                                :noexport:
-#+BEGIN_SRC emacs-lisp
-(setq org-beamer-frame-default-options "allowframebreaks,label=")
-#+END_SRC
-
-#+RESULTS:
-: allowframebreaks,label=
-
-
 * Literature Review
 ** Structure Factor and RDFs
    + Both Molinero and Goddard as well as Sengupta and Lyulin suggest validating force field with structure factor $S(q)$ and Sulfur-Sulfur RDFs
@@ -76,8 +67,7 @@ This is a picture of a structure factor plot for different degrees of blockiness
 
     + Last 3 ns of NpT used for analysis
 
-* Validation Simulation
-
+* Validation Simulation Setup
 ** Initial Configuration
 A visualization of the initial configuration file is shown below:
 
@@ -144,19 +134,20 @@ grep -oh -P '.{0,13}c-s.{0,1}' bonds.txt
 | {11916 | 11917 | c-s} |      |
 | {14172 | 14173 | c-s} |      |
 
+** Deleting Angles/Dihedrals with Python                                              
 
-** Deleting Angles/Dihedrals with Awk                                              
-*** Awk Code
-#+BEGIN_SRC awk :in-file ~/Documents/DOEIonomers/emcautomated/polymer/validation/nafion.data :results value file :file angles.txt :output-dir ~/Documents/DOEIonomers/emcautomated/polymer/validation
-# Get rid of non existent angles
-/ Angles/{flag=1}
-/ Dihedrals/{flag=0}flag{if($2 != 16 && $2 != 20) print}
-/ Dihedrals/{flag=1}
-/ Impropers/{flag=0}flag
+   ~pizza.py~ is the easiest way to remove unwanted angles/dihedrals/impropers
+
+   [[~/Documents/DOEIonomers/emcautomated/polymer/validation/data_parse.py]]
+
+   Copying the modified data file to laika-pack
+
+#+BEGIN_SRC sh
+kubectl cp -n ntiwari /home/nick/Documents/DOEIonomers/emcautomated/polymer/validation/nafion_out.data lammps6-0:/home/jovyan/validation/d2020/nafion.data
 #+END_SRC
 
 #+RESULTS:
-[[file:~/Documents/DOEIonomers/emcautomated/polymer/validation/angles.txt]]
 
+   
 ** meme :noexport:
    
